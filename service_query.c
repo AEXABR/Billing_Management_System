@@ -1,9 +1,20 @@
+/*
+ * service_query.c — 查询统计实现
+ *
+ * query_card()    查询卡信息（支持模糊匹配）
+ * query_billing() 查询统计入口（3 个子功能）
+ *   choice_one()   按卡号 + 时间范围查询消费明细
+ *   choice_two()   按时间范围统计总营业额
+ *   choice_three() 按年份统计每月营业额
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "service_query.h"
 
+// 查询单卡在指定时间段内的消费明细
 void choice_one()
 {
     printf("----------查询单卡消费--------\n");
@@ -31,22 +42,14 @@ void choice_one()
             nFound = 1;
             if (pBilling->ttStart >= ttStartTime && pBilling->ttStart <= ttEndTime) {
                 ++nCnt;
-                char sLoginTime[20];
-                char sLogoutTime[20];
+                char sLoginTime[20], sLogoutTime[20];
                 strcpy(sLoginTime, TT_transform_S(pBilling->ttStart));
                 strcpy(sLogoutTime, TT_transform_S(pBilling->ttEnd));
                 printf("%-20s  %-12s  %-10s  %-23s  %-23s\n",
-                    "卡号",
-                    "消费金额",
-                    "余额",
-                    "上机时间",
-                    "下机时间");
+                    "卡号", "消费金额", "余额", "上机时间", "下机时间");
                 printf("%-18s  %-8.1f  %-8.1f  %-19s  %-19s\n",
-                    pBilling->sName,
-                    pBilling->fAmount,
-                    pBilling->fBalance,
-                    sLoginTime,
-                    sLogoutTime);
+                    pBilling->sName, pBilling->fAmount, pBilling->fBalance,
+                    sLoginTime, sLogoutTime);
             }
         }
     }
@@ -54,6 +57,7 @@ void choice_one()
     printf("共查询到 %d 条记录\n", nCnt);
 }
 
+// 统计指定时间段内的总营业额
 void choice_two()
 {
     printf("----------统计总营业额--------\n");
@@ -74,6 +78,7 @@ void choice_two()
     printf("总营业额：%.1f\n", fTotalAmount);
 }
 
+// 统计某一年各月份的营业额
 void choice_three()
 {
     printf("----------统计月营业额--------\n");
@@ -98,9 +103,12 @@ void choice_three()
         }
         nYear = nYear * 10 + (sYearInput[i] ^ '0');
     }
-    if (!nValid || nYear < 1900 || nYear > nCurrentYear)
+    if (!nValid || nYear < 1900 || nYear > nCurrentYear) {
         printf("输入无效，请输入1900~%d之间的年份\n\n", nCurrentYear);
+        return;
+    }
 
+    // 构造该年的起止时间戳
     struct tm tmYearStart = { 0 };
     tmYearStart.tm_year = nYear - 1900;
     tmYearStart.tm_mon = 0;
@@ -115,6 +123,7 @@ void choice_three()
     tmNextYearStart.tm_year += 1;
     time_t ttEndTime = mktime(&tmNextYearStart) - 1;
 
+    // 按月累加消费金额
     float fMonths[12] = { 0 };
     for (BILLING* pBilling = billing_list.head; pBilling != NULL; pBilling = pBilling->pNext) {
         if (pBilling->ttStart >= ttStartTime && pBilling->ttStart <= ttEndTime)
@@ -123,11 +132,11 @@ void choice_three()
 
     printf("%d 年每月营业额：\n", nYear);
     printf("%-6s  %-10s\n", "月份", "营业额");
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
         printf("%02d月     %-8.1f\n", i + 1, fMonths[i]);
-    }
 }
 
+// 查询卡信息（支持模糊搜索）
 void query_card()
 {
     printf("----------查询卡---------\n");
@@ -144,25 +153,17 @@ void query_card()
     for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
         if (strstr(pCard->sName, sName) != NULL) {
             printf("%-20s  %-6s  %-10s  %-13s  %-8s  %-25s\n",
-                "卡号",
-                "状态",
-                "余额",
-                "累计消费",
-                "使用次数",
-                "上次使用时间");
+                "卡号", "状态", "余额", "累计消费", "使用次数", "上次使用时间");
             printf("%-18s  %-4d  %-8.1f  %-9.1f  %-8d  %-19s\n",
-                pCard->sName,
-                pCard->nStatus,
-                pCard->fBalance,
-                pCard->fTotalUse,
-                pCard->nUseCount,
-                TT_transform_S(pCard->ttLastTime));
+                pCard->sName, pCard->nStatus, pCard->fBalance,
+                pCard->fTotalUse, pCard->nUseCount, TT_transform_S(pCard->ttLastTime));
             nFound = 1;
         }
     }
     if (!nFound) printf("无效输入，卡号不存在\n");
 }
 
+// 查询统计入口
 void query_billing()
 {
     printf("--------查询统计--------\n");
@@ -186,18 +187,9 @@ void query_billing()
         return;
     }
 
-    int nChoice = sInput[0] - '0';
-    switch (nChoice) {
-    case 1:
-        choice_one();
-        break;
-
-    case 2:
-        choice_two();
-        break;
-
-    case 3:
-        choice_three();
-        break;
+    switch (sInput[0] - '0') {
+    case 1: choice_one();   break;
+    case 2: choice_two();   break;
+    case 3: choice_three(); break;
     }
 }

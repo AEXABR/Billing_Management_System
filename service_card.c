@@ -1,3 +1,9 @@
+/*
+ * service_card.c — 卡片管理实现
+ * card_add()    开卡 — 创建新卡并写入链表
+ * card_cancel() 注销 — 退还余额并标记为已注销
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +14,7 @@ void card_add()
 {
     printf("----------添加卡---------\n");
 
+    // 输入卡号（需唯一）
     char sName[19];
     while (1) {
         printf("请输入要添加的卡的卡号（长度为1到18）：");
@@ -29,6 +36,7 @@ void card_add()
         break;
     }
 
+    // 输入密码
     char sPwd[9];
     while (1) {
         printf("请输入要添加的卡的密码（长度为1到8）：");
@@ -40,6 +48,7 @@ void card_add()
         break;
     }
 
+    // 输入开卡金额
     int nMoney;
     char sMoneyInput[32];
     while (1) {
@@ -64,6 +73,7 @@ void card_add()
         else printf("输入无效，请输入正整数！\n\n");
     }
 
+    // 创建新卡并加入链表
     time_t ttCurTime = time(0);
     CARD* pNewCard = (CARD*)malloc(sizeof(CARD));
     if (!pNewCard) {
@@ -72,7 +82,7 @@ void card_add()
     }
     strcpy(pNewCard->sName, sName);
     strcpy(pNewCard->sPwd, sPwd);
-    pNewCard->nStatus = 0;
+    pNewCard->nStatus = INACTIVE;
     pNewCard->ttStart = ttCurTime;
     pNewCard->ttEnd = ttCurTime;
     pNewCard->fTotalUse = 0.0f;
@@ -86,16 +96,9 @@ void card_add()
         printf("警告：卡信息写入文件失败\n");
 
     printf("-------添加的卡信息如下-------\n");
-    printf("%-22s  %-14s  %-10s  %-12s\n",
-        "卡号",
-        "密码",
-        "状态",
-        "开卡金额");
+    printf("%-22s  %-14s  %-10s  %-12s\n", "卡号", "密码", "状态", "开卡金额");
     printf("%-20s  %-12s  %-8d  %-8.1f\n",
-        pNewCard->sName,
-        pNewCard->sPwd,
-        pNewCard->nStatus,
-        pNewCard->fBalance);
+        pNewCard->sName, pNewCard->sPwd, pNewCard->nStatus, pNewCard->fBalance);
 }
 
 void card_cancel()
@@ -126,11 +129,11 @@ void card_cancel()
                 return;
             }
 
+            // 状态校验：正在上机或已注销的卡不能注销
             if (pCard->nStatus == ACTIVE) {
                 printf("注销失败，卡正在上机\n");
                 return;
             }
-
             if (pCard->nStatus == CANCELLED) {
                 printf("注销失败，卡已注销\n");
                 return;
@@ -140,17 +143,12 @@ void card_cancel()
             pCard->nStatus = CANCELLED;
             pCard->fBalance = 0.0f;
 
-            if (!save_card_list_to_file()) {
+            if (!save_card_list_to_file())
                 printf("警告：卡信息写入文件失败\n");
-            }
 
             printf("--------注销信息如下-------\n");
-            printf("%-20s  %-12s\n",
-                "卡号",
-                "退费金额");
-            printf("%-18s  %-8.1f\n",
-                pCard->sName,
-                fRefundMoney);
+            printf("%-20s  %-12s\n", "卡号", "退费金额");
+            printf("%-18s  %-8.1f\n", pCard->sName, fRefundMoney);
         }
     }
     if (!nFound) printf("无效输入，卡号不存在\n");

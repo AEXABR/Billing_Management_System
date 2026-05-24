@@ -1,27 +1,38 @@
+/*
+ * service_tool.c — 工具函数实现
+ * 链表操作、输入校验、时间转换、文件持久化。
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "service_tool.h"
 
+// 全局链表定义
 CARD_LIST card_list = { NULL, NULL };
 BILLING_LIST billing_list = { NULL, NULL };
 
+// 卡片链表 — 尾插法
 void list_addcard(CARD* pCard)
 {
     pCard->pNext = NULL;
     if (card_list.tail)
         card_list.tail = card_list.tail->pNext = pCard;
-    else card_list.tail = card_list.head = pCard;
+    else
+        card_list.tail = card_list.head = pCard;
 }
 
+// 账单链表 — 头插法（最新记录在前，便于查找未结算记录）
 void list_addbilling(BILLING* pBilling)
 {
     pBilling->pNext = NULL;
     if (billing_list.head)
         pBilling->pNext = billing_list.head, billing_list.head = pBilling;
-    else billing_list.head = billing_list.tail = pBilling;
+    else
+        billing_list.head = billing_list.tail = pBilling;
 }
 
+// 丢弃 stdin 当前行剩余字符，返回 1 表示用户输入超出缓冲区（输入过长）
 int discard_rest_of_line()
 {
     int nChar = getchar();
@@ -30,6 +41,7 @@ int discard_rest_of_line()
     return 1;
 }
 
+// 字符串时间 "YYYY-MM-DD HH:MM:SS" → time_t
 time_t S_transform_TT(char* sTime)
 {
     struct tm tmTime = { 0 };
@@ -48,6 +60,7 @@ time_t S_transform_TT(char* sTime)
     return mktime(&tmTime);
 }
 
+// time_t → 字符串 "YYYY-MM-DD HH:MM:SS"（返回静态缓冲区，非线程安全）
 char* TT_transform_S(time_t ttTime)
 {
     struct tm* tmCurrent = localtime(&ttTime);
@@ -62,6 +75,7 @@ char* TT_transform_S(time_t ttTime)
     return sTime;
 }
 
+// 持久化：遍历 card_list 写入 data/card.txt 和 data/card.dat
 int save_card_list_to_file()
 {
     FILE* pFileTxt = fopen("data/card.txt", "w");
@@ -98,6 +112,7 @@ int save_card_list_to_file()
     return 1;
 }
 
+// 持久化：遍历 billing_list 写入 data/billing.txt 和 data/billing.dat
 int save_billing_list_to_file()
 {
     FILE* pFileTxt = fopen("data/billing.txt", "w");
@@ -111,10 +126,8 @@ int save_billing_list_to_file()
     for (BILLING* pBilling = billing_list.head; pBilling != NULL; pBilling = pBilling->pNext) {
         char sStartTime[20];
         char sEndTime[20];
-
         strcpy(sStartTime, TT_transform_S(pBilling->ttStart));
         strcpy(sEndTime, TT_transform_S(pBilling->ttEnd));
-
         fprintf(pFileTxt, "%s##%s##%s##%.1f##%.1f##%d\n",
             pBilling->sName,
             sStartTime,
@@ -130,6 +143,7 @@ int save_billing_list_to_file()
     return 1;
 }
 
+// 交互式输入日期（年/月/日），含范围校验和闰年判断
 void input_time(const char* sOutput, struct tm* tmInput)
 {
     time_t ttCurTime = time(0);
@@ -141,6 +155,8 @@ void input_time(const char* sOutput, struct tm* tmInput)
     int nDaysInMonth;
 
     printf("%s\n", sOutput);
+
+    // 输入年份
     while (1) {
         printf("年：");
         scanf("%5s", sDateInput);
@@ -162,6 +178,7 @@ void input_time(const char* sOutput, struct tm* tmInput)
         printf("输入无效，请输入1900~%d之间的年份\n\n", tmNow.tm_year + 1900);
     }
 
+    // 输入月份
     while (1) {
         printf("月：");
         scanf("%3s", sDateInput);
@@ -183,14 +200,17 @@ void input_time(const char* sOutput, struct tm* tmInput)
         printf("输入无效，请输入1~12之间的月份\n\n");
     }
 
+    // 根据月份计算当月最大天数
     if (nMonth == 2) {
         int nLeap = ((nYear % 4 == 0 && nYear % 100 != 0) || (nYear % 400 == 0));
         nDaysInMonth = nLeap ? 29 : 28;
     }
     else if (nMonth == 4 || nMonth == 6 || nMonth == 9 || nMonth == 11)
         nDaysInMonth = 30;
-    else nDaysInMonth = 31;
+    else
+        nDaysInMonth = 31;
 
+    // 输入日期
     while (1) {
         printf("日：");
         scanf("%3s", sDateInput);

@@ -1,3 +1,8 @@
+/*
+ * menu.h — 菜单模块头文件
+ * 聚合所有业务模块头文件，声明菜单相关函数。
+ */
+
 #ifndef MENU_H
 #define MENU_H
 
