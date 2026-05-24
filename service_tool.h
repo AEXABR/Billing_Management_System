@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+enum STATUS {
+    ACTIVE = 0,
+    INACTIVE = 1,
+    CANCELLED = 2
+};
+
 typedef struct CARD {
     char sName[19];
     char sPwd[9];

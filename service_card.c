@@ -126,18 +126,18 @@ void card_cancel()
                 return;
             }
 
-            if (pCard->nStatus == 1) {
+            if (pCard->nStatus == ACTIVE) {
                 printf("注销失败，卡正在上机\n");
                 return;
             }
 
-            if (pCard->nStatus == 2) {
+            if (pCard->nStatus == CANCELLED) {
                 printf("注销失败，卡已注销\n");
                 return;
             }
 
             float fRefundMoney = pCard->fBalance;
-            pCard->nStatus = 2;
+            pCard->nStatus = CANCELLED;
             pCard->fBalance = 0.0f;
 
             if (!save_card_list_to_file()) {

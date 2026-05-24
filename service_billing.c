@@ -56,7 +56,7 @@ void billing_rechange()
                 return;
             }
 
-            if (pCard->nStatus == 2) {
+            if (pCard->nStatus == CANCELLED) {
                 printf("充值失败，卡已注销\n");
                 return;
             }
@@ -109,12 +109,12 @@ void billing_refund()
                 return;
             }
 
-            if (pCard->nStatus == 1) {
+            if (pCard->nStatus == ACTIVE) {
                 printf("退费失败，卡正在上机\n");
                 return;
             }
 
-            if (pCard->nStatus == 2) {
+            if (pCard->nStatus == CANCELLED) {
                 printf("退费失败，卡已注销\n");
                 return;
             }

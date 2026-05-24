@@ -29,11 +29,11 @@ void computer_login()
                 return;
             }
 
-            if (pCard->nStatus == 1) {
+            if (pCard->nStatus == ACTIVE) {
                 printf("上机失败，卡正在运行\n");
                 return;
             }
-            if (pCard->nStatus == 2) {
+            if (pCard->nStatus == CANCELLED) {
                 printf("上机失败，卡已注销\n");
                 return;
             }
@@ -43,7 +43,7 @@ void computer_login()
                 return;
             }
 
-            pCard->nStatus = 1;
+            pCard->nStatus = ACTIVE;
             pCard->ttLastTime = time(0);
             pCard->nUseCount++;
 
@@ -57,7 +57,7 @@ void computer_login()
             pNewBilling->ttEnd = 0;
             pNewBilling->fBalance = pCard->fBalance;
             pNewBilling->fAmount = 0.0f;
-            pNewBilling->nStatus = 0;
+            pNewBilling->nStatus = ACTIVE;
             list_addbilling(pNewBilling);
 
             if (!save_card_list_to_file() || !save_billing_list_to_file())
@@ -105,11 +105,11 @@ void computer_logout()
                 return;
             }
 
-            if (pCard->nStatus == 0) {
+            if (pCard->nStatus == INACTIVE) {
                 printf("下机失败，卡未上机\n");
                 return;
             }
-            if (pCard->nStatus == 2) {
+            if (pCard->nStatus == CANCELLED) {
                 printf("下机失败，卡已注销\n");
                 return;
             }
@@ -121,15 +121,15 @@ void computer_logout()
                 return;
             }
 
-            pCard->nStatus = 0;
+            pCard->nStatus = INACTIVE;
             pCard->fBalance -= fUsedAmount;
             pCard->fTotalUse += fUsedAmount;
 
             for (BILLING* pBilling = billing_list.head; pBilling != NULL; pBilling = pBilling->pNext) {
-                if (!strcmp(pBilling->sName, sName) && pBilling->nStatus == 0) {
+                if (!strcmp(pBilling->sName, sName) && pBilling->nStatus == ACTIVE) {
                     pBilling->ttEnd = ttCurTime;
                     pBilling->fAmount = fUsedAmount;
-                    pBilling->nStatus = 1;
+                    pBilling->nStatus = INACTIVE;
                     break;
                 }
             }
