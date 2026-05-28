@@ -57,7 +57,7 @@ main.c
 
 **调用链：** `main` → `menu`（菜单路由）→ 各 `service_*`（业务逻辑）→ `service_tool`（数据模型与工具函数）
 
-各 service 模块通过 `service_tool.h` 共享 `CARD`/`BILLING` 类型、链表操作、输入校验、持久化等功能。`service_query` 模块为课程扩展内容，删除不影响其他功能。
+各 service 模块通过 `service_tool.h` 共享 `CARD`/`BILLING` 类型、链表操作、输入校验、持久化等功能。`service_query` 模块的 `query_billing` 部分为课程扩展内容，删除不影响其他功能。
 
 ## 🔨 编译运行
 
