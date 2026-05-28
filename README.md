@@ -37,11 +37,11 @@ main.c
      │   card_add()         │          |      
      │   card_cancel()      │          |       
      │                      │          |      
-     ├─ service_computer.h  │          |       
+     ├─ service_computer.h ─┤          |       
      │   computer_login()   │          |        
      │   computer_logout()  ├── service_tool.h   
      │                      │   list_addcard()   
-     ├─ service_billing.h   │   list_addbilling()
+     ├─ service_billing.h ──┤   list_addbilling()
      │   billing_rechange() │   discard_rest_of_line()
      │   billing_refund()   │   str_to_int()     
      │                      │   input_time()     
