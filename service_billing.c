@@ -30,55 +30,32 @@ void billing_rechange()
 
     // 输入充值金额（正整数校验）
     int nMoney;
-    char sMoneyInput[32];
-    while (1) {
-        printf("请输入充值金额（RMB）：");
-        scanf("%31s", sMoneyInput);
-        if (discard_rest_of_line()) {
-            printf("输入无效，请输入正整数！\n\n");
-            continue;
-        }
+    input_positive_int("请输入充值金额（RMB）：", &nMoney);
 
-        nMoney = 0;
-        int nValid = 1;
-        for (int nIndex = 0; sMoneyInput[nIndex] != '\0'; nIndex++) {
-            if (sMoneyInput[nIndex] >= '0' && sMoneyInput[nIndex] <= '9')
-                nMoney = nMoney * 10 + (sMoneyInput[nIndex] ^ '0');
-            else {
-                nValid = 0;
-                break;
-            }
-        }
-        if (nValid && nMoney > 0) break;
-        else printf("输入无效，请输入正整数！\n\n");
+    CARD* pCard = find_card_by_name(sName);
+    if (!pCard) {
+        printf("无效输入，卡号不存在\n");
+        return;
     }
 
-    int nFound = 0;
-    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
-        if (!strcmp(pCard->sName, sName)) {
-            nFound = 1;
-
-            if (strcmp(pCard->sPwd, sPwd)) {
-                printf("充值失败，密码错误\n");
-                return;
-            }
-            // 已注销卡不能充值
-            if (pCard->nStatus == CANCELLED) {
-                printf("充值失败，卡已注销\n");
-                return;
-            }
-
-            pCard->fBalance += (float)nMoney;
-
-            if (!save_card_list_to_file())
-                printf("警告：卡信息写入文件失败\n");
-
-            printf("--------充值信息如下-------\n");
-            printf("%-20s  %-12s  %-10s\n", "卡号", "充值金额", "余额");
-            printf("%-18s  %-8.1f  %-8.1f\n", pCard->sName, (float)nMoney, pCard->fBalance);
-        }
+    if (strcmp(pCard->sPwd, sPwd)) {
+        printf("充值失败，密码错误\n");
+        return;
     }
-    if (!nFound) printf("无效输入，卡号不存在\n");
+    // 已注销卡不能充值
+    if (pCard->nStatus == CANCELLED) {
+        printf("充值失败，卡已注销\n");
+        return;
+    }
+
+    pCard->fBalance += (float)nMoney;
+
+    if (!save_card_list_to_file())
+        printf("警告：卡信息写入文件失败\n");
+
+    printf("--------充值信息如下-------\n");
+    printf("%-20s  %-12s  %-10s\n", "卡号", "充值金额", "余额");
+    printf("%-18s  %-8.1f  %-8.1f\n", pCard->sName, (float)nMoney, pCard->fBalance);
 }
 
 void billing_refund()
@@ -99,40 +76,38 @@ void billing_refund()
         return;
     }
 
-    int nFound = 0;
-    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
-        if (!strcmp(pCard->sName, sName)) {
-            nFound = 1;
-
-            if (strcmp(pCard->sPwd, sPwd)) {
-                printf("退费失败，密码错误\n");
-                return;
-            }
-
-            // 正在上机或已注销的卡不能退费
-            if (pCard->nStatus == ACTIVE) {
-                printf("退费失败，卡正在上机\n");
-                return;
-            }
-            if (pCard->nStatus == CANCELLED) {
-                printf("退费失败，卡已注销\n");
-                return;
-            }
-            if (pCard->fBalance <= 0.0f) {
-                printf("退费失败，卡余额不足\n");
-                return;
-            }
-
-            float fRefundAmount = pCard->fBalance;
-            pCard->fBalance = 0.0f;
-
-            if (!save_card_list_to_file())
-                printf("警告：卡信息写入文件失败\n");
-
-            printf("--------退费信息如下-------\n");
-            printf("%-20s  %-12s  %-10s\n", "卡号", "退费金额", "余额");
-            printf("%-18s  %-8.1f  %-8.1f\n", pCard->sName, fRefundAmount, pCard->fBalance);
-        }
+    CARD* pCard = find_card_by_name(sName);
+    if (!pCard) {
+        printf("无效输入，卡号不存在\n");
+        return;
     }
-    if (!nFound) printf("无效输入，卡号不存在\n");
+
+    if (strcmp(pCard->sPwd, sPwd)) {
+        printf("退费失败，密码错误\n");
+        return;
+    }
+
+    // 正在上机或已注销的卡不能退费
+    if (pCard->nStatus == ACTIVE) {
+        printf("退费失败，卡正在上机\n");
+        return;
+    }
+    if (pCard->nStatus == CANCELLED) {
+        printf("退费失败，卡已注销\n");
+        return;
+    }
+    if (pCard->fBalance <= 0.0f) {
+        printf("退费失败，卡余额不足\n");
+        return;
+    }
+
+    float fRefundAmount = pCard->fBalance;
+    pCard->fBalance = 0.0f;
+
+    if (!save_card_list_to_file())
+        printf("警告：卡信息写入文件失败\n");
+
+    printf("--------退费信息如下-------\n");
+    printf("%-20s  %-12s  %-10s\n", "卡号", "退费金额", "余额");
+    printf("%-18s  %-8.1f  %-8.1f\n", pCard->sName, fRefundAmount, pCard->fBalance);
 }

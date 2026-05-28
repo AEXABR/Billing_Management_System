@@ -31,59 +31,58 @@ void computer_login()
         return;
     }
 
-    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
-        if (!strcmp(pCard->sName, sName)) {
-            if (strcmp(pCard->sPwd, sPwd)) {
-                printf("上机失败，密码错误\n");
-                return;
-            }
-
-            // 状态校验
-            if (pCard->nStatus == ACTIVE) {
-                printf("上机失败，卡正在运行\n");
-                return;
-            }
-            if (pCard->nStatus == CANCELLED) {
-                printf("上机失败，卡已注销\n");
-                return;
-            }
-            if (pCard->fBalance <= 0.0f) {
-                printf("上机失败，余额不足\n");
-                return;
-            }
-
-            // 更新卡片状态
-            pCard->nStatus = ACTIVE;
-            pCard->ttLastTime = time(0);
-            pCard->nUseCount++;
-
-            // 创建账单记录（标记为未结算）
-            BILLING* pNewBilling = (BILLING*)malloc(sizeof(BILLING));
-            if (!pNewBilling) {
-                printf("上机失败，内存不足\n");
-                return;
-            }
-            strcpy(pNewBilling->sName, pCard->sName);
-            pNewBilling->ttStart = time(0);
-            pNewBilling->ttEnd = 0;
-            pNewBilling->fBalance = pCard->fBalance;
-            pNewBilling->fAmount = 0.0f;
-            pNewBilling->nStatus = ACTIVE;
-            list_addbilling(pNewBilling);
-
-            if (!save_card_list_to_file() || !save_billing_list_to_file())
-                printf("警告：信息写入文件失败\n");
-
-            printf("上机成功\n");
-            printf("------上机信息如下------\n");
-            printf("%-20s  %-10s  %-23s\n", "卡号", "余额", "上机时间");
-            printf("%-18s  %-8.1f  %s\n",
-                pCard->sName, pCard->fBalance, TT_transform_S(time(0)));
-
-            return;
-        }
+    CARD* pCard = find_card_by_name(sName);
+    if (!pCard) {
+        printf("上机失败，卡号不存在\n");
+        return;
     }
-    printf("上机失败，卡号不存在\n");
+
+    if (strcmp(pCard->sPwd, sPwd)) {
+        printf("上机失败，密码错误\n");
+        return;
+    }
+
+    // 状态校验
+    if (pCard->nStatus == ACTIVE) {
+        printf("上机失败，卡正在运行\n");
+        return;
+    }
+    if (pCard->nStatus == CANCELLED) {
+        printf("上机失败，卡已注销\n");
+        return;
+    }
+    if (pCard->fBalance <= 0.0f) {
+        printf("上机失败，余额不足\n");
+        return;
+    }
+
+    // 更新卡片状态
+    pCard->nStatus = ACTIVE;
+    pCard->ttLastTime = time(0);
+    pCard->nUseCount++;
+
+    // 创建账单记录（标记为未结算）
+    BILLING* pNewBilling = (BILLING*)malloc(sizeof(BILLING));
+    if (!pNewBilling) {
+        printf("上机失败，内存不足\n");
+        return;
+    }
+    strcpy(pNewBilling->sName, pCard->sName);
+    pNewBilling->ttStart = time(0);
+    pNewBilling->ttEnd = 0;
+    pNewBilling->fBalance = pCard->fBalance;
+    pNewBilling->fAmount = 0.0f;
+    pNewBilling->nStatus = ACTIVE;
+    list_addbilling(pNewBilling);
+
+    if (!save_card_list_to_file() || !save_billing_list_to_file())
+        printf("警告：信息写入文件失败\n");
+
+    printf("上机成功\n");
+    printf("------上机信息如下------\n");
+    printf("%-20s  %-10s  %-23s\n", "卡号", "余额", "上机时间");
+    printf("%-18s  %-8.1f  %s\n",
+        pCard->sName, pCard->fBalance, TT_transform_S(time(0)));
 }
 
 void computer_logout()
@@ -104,60 +103,59 @@ void computer_logout()
         return;
     }
 
-    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
-        if (!strcmp(pCard->sName, sName)) {
-            if (strcmp(pCard->sPwd, sPwd)) {
-                printf("下机失败，密码错误\n");
-                return;
-            }
+    CARD* pCard = find_card_by_name(sName);
+    if (!pCard) {
+        printf("下机失败，卡号不存在\n");
+        return;
+    }
 
-            if (pCard->nStatus == INACTIVE) {
-                printf("下机失败，卡未上机\n");
-                return;
-            }
-            if (pCard->nStatus == CANCELLED) {
-                printf("下机失败，卡已注销\n");
-                return;
-            }
+    if (strcmp(pCard->sPwd, sPwd)) {
+        printf("下机失败，密码错误\n");
+        return;
+    }
 
-            // 按小时计费：消费金额 = 时长(h) × 10元
-            time_t ttCurTime = time(0);
-            float fUsedAmount = (float)(ttCurTime - pCard->ttLastTime) / 3600.0f * HOURLY_RATE;
-            if (fUsedAmount > pCard->fBalance) {
-                printf("下机失败，余额不足\n");
-                return;
-            }
+    if (pCard->nStatus == INACTIVE) {
+        printf("下机失败，卡未上机\n");
+        return;
+    }
+    if (pCard->nStatus == CANCELLED) {
+        printf("下机失败，卡已注销\n");
+        return;
+    }
 
-            // 更新卡片余额与累计消费
-            pCard->nStatus = INACTIVE;
-            pCard->fBalance -= fUsedAmount;
-            pCard->fTotalUse += fUsedAmount;
+    // 按小时计费：消费金额 = 时长(h) × 10元
+    time_t ttCurTime = time(0);
+    float fUsedAmount = (float)(ttCurTime - pCard->ttLastTime) / 3600.0f * HOURLY_RATE;
+    if (fUsedAmount > pCard->fBalance) {
+        printf("下机失败，余额不足\n");
+        return;
+    }
 
-            // 匹配未结算的账单记录并完成结算
-            for (BILLING* pBilling = billing_list.head; pBilling != NULL; pBilling = pBilling->pNext) {
-                if (!strcmp(pBilling->sName, sName) && pBilling->nStatus == ACTIVE) {
-                    pBilling->ttEnd = ttCurTime;
-                    pBilling->fAmount = fUsedAmount;
-                    pBilling->nStatus = INACTIVE;
-                    break;
-                }
-            }
+    // 更新卡片余额与累计消费
+    pCard->nStatus = INACTIVE;
+    pCard->fBalance -= fUsedAmount;
+    pCard->fTotalUse += fUsedAmount;
 
-            if (!save_card_list_to_file() || !save_billing_list_to_file())
-                printf("警告：信息写入文件失败\n");
-
-            printf("下机成功\n");
-            printf("------下机信息如下------\n");
-            char sLoginTime[20], sLogoutTime[20];
-            strcpy(sLoginTime, TT_transform_S(pCard->ttLastTime));
-            strcpy(sLogoutTime, TT_transform_S(ttCurTime));
-            printf("%-20s  %-12s  %-10s  %-23s  %-23s\n",
-                "卡号", "消费金额", "余额", "上机时间", "下机时间");
-            printf("%-18s  %-8.1f  %-8.1f  %-19s  %-19s\n",
-                pCard->sName, fUsedAmount, pCard->fBalance, sLoginTime, sLogoutTime);
-
-            return;
+    // 匹配未结算的账单记录并完成结算
+    for (BILLING* pBilling = billing_list.head; pBilling != NULL; pBilling = pBilling->pNext) {
+        if (!strcmp(pBilling->sName, sName) && pBilling->nStatus == ACTIVE) {
+            pBilling->ttEnd = ttCurTime;
+            pBilling->fAmount = fUsedAmount;
+            pBilling->nStatus = INACTIVE;
+            break;
         }
     }
-    printf("下机失败，卡号不存在\n");
+
+    if (!save_card_list_to_file() || !save_billing_list_to_file())
+        printf("警告：信息写入文件失败\n");
+
+    printf("下机成功\n");
+    printf("------下机信息如下------\n");
+    char sLoginTime[20], sLogoutTime[20];
+    strcpy(sLoginTime, TT_transform_S(pCard->ttLastTime));
+    strcpy(sLogoutTime, TT_transform_S(ttCurTime));
+    printf("%-20s  %-12s  %-10s  %-23s  %-23s\n",
+        "卡号", "消费金额", "余额", "上机时间", "下机时间");
+    printf("%-18s  %-8.1f  %-8.1f  %-19s  %-19s\n",
+        pCard->sName, fUsedAmount, pCard->fBalance, sLoginTime, sLogoutTime);
 }

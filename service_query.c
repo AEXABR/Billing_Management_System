@@ -95,15 +95,8 @@ void choice_three()
         return;
     }
 
-    int nYear = 0, nValid = 1;
-    for (int i = 0; sYearInput[i] != '\0'; ++i) {
-        if (sYearInput[i] < '0' || sYearInput[i] > '9') {
-            nValid = 0;
-            break;
-        }
-        nYear = nYear * 10 + (sYearInput[i] ^ '0');
-    }
-    if (!nValid || nYear < 1900 || nYear > nCurrentYear) {
+    int nYear;
+    if (!str_to_int(sYearInput, &nYear) || nYear < 1900 || nYear > nCurrentYear) {
         printf("输入无效，请输入1900~%d之间的年份\n\n", nCurrentYear);
         return;
     }

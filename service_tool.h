@@ -80,4 +80,11 @@ char* TT_transform_S(time_t ttTime);              // time_t → 字符串（静�
 int save_card_list_to_file();
 int save_billing_list_to_file();
 
+// —— 数据校验与查找 ——
+int str_to_int(const char *s, int *out);           // 字符串转整数，成功返回 1
+int is_leap_year(int year);                        // 判断闰年
+int days_of_month(int year, int month);            // 返回指定年月的天数
+int input_positive_int(const char *prompt, int *out);  // 交互式输入正整数
+CARD* find_card_by_name(const char *sName);        // 按卡号查找卡片
+
 #endif // SERVICE_TOOL_H

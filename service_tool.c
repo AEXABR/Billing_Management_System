@@ -143,6 +143,58 @@ int save_billing_list_to_file()
     return 1;
 }
 
+// 字符串转整数：逐字符校验数字并累加，成功返回 1
+int str_to_int(const char* s, int* out)
+{
+    *out = 0;
+    for (int i = 0; s[i] != '\0'; i++) {
+        if (s[i] < '0' || s[i] > '9')
+            return 0;
+        *out = *out * 10 + (s[i] ^ '0');
+    }
+    return 1;
+}
+
+int is_leap_year(int year)
+{
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+int days_of_month(int year, int month)
+{
+    if (month == 2)
+        return is_leap_year(year) ? 29 : 28;
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        return 30;
+    return 31;
+}
+
+// 交互式输入正整数（循环至合法输入为止）
+int input_positive_int(const char* prompt, int* out)
+{
+    char sInput[32];
+    while (1) {
+        printf("%s", prompt);
+        scanf("%31s", sInput);
+        if (discard_rest_of_line()) {
+            printf("输入无效，请输入正整数！\n\n");
+            continue;
+        }
+        if (str_to_int(sInput, out) && *out > 0)
+            return 1;
+        printf("输入无效，请输入正整数！\n\n");
+    }
+}
+
+// 按卡号精确查找卡片，返回指针或 NULL
+CARD* find_card_by_name(const char* sName)
+{
+    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext)
+        if (!strcmp(pCard->sName, sName))
+            return pCard;
+    return NULL;
+}
+
 // 交互式输入日期（年/月/日），含范围校验和闰年判断
 void input_time(const char* sOutput, struct tm* tmInput)
 {
@@ -150,9 +202,7 @@ void input_time(const char* sOutput, struct tm* tmInput)
     struct tm tmNow = *localtime(&ttCurTime);
 
     char sDateInput[5];
-    int nYear, nMonth, nDay;
-    int nValid;
-    int nDaysInMonth;
+    int nYear, nMonth, nDay, nMaxDay;
 
     printf("%s\n", sOutput);
 
@@ -160,76 +210,38 @@ void input_time(const char* sOutput, struct tm* tmInput)
     while (1) {
         printf("年：");
         scanf("%5s", sDateInput);
-        if (discard_rest_of_line()) {
+        if (discard_rest_of_line() || !str_to_int(sDateInput, &nYear)
+            || nYear < 1900 || nYear > tmNow.tm_year + 1900) {
             printf("输入无效，请输入1900~%d之间的年份\n\n", tmNow.tm_year + 1900);
             continue;
         }
-
-        nYear = 0;
-        nValid = 1;
-        for (int nIndex = 0; sDateInput[nIndex] != '\0'; nIndex++) {
-            if (sDateInput[nIndex] < '0' || sDateInput[nIndex] > '9') {
-                nValid = 0;
-                break;
-            }
-            nYear = nYear * 10 + (sDateInput[nIndex] ^ '0');
-        }
-        if (nValid && nYear >= 1900 && nYear <= tmNow.tm_year + 1900) break;
-        printf("输入无效，请输入1900~%d之间的年份\n\n", tmNow.tm_year + 1900);
+        break;
     }
 
     // 输入月份
     while (1) {
         printf("月：");
         scanf("%3s", sDateInput);
-        if (discard_rest_of_line()) {
+        if (discard_rest_of_line() || !str_to_int(sDateInput, &nMonth)
+            || nMonth < 1 || nMonth > 12) {
             printf("输入无效，请输入1~12之间的月份\n\n");
             continue;
         }
-
-        nMonth = 0;
-        nValid = 1;
-        for (int nIndex = 0; sDateInput[nIndex] != '\0'; nIndex++) {
-            if (sDateInput[nIndex] < '0' || sDateInput[nIndex] > '9') {
-                nValid = 0;
-                break;
-            }
-            nMonth = nMonth * 10 + (sDateInput[nIndex] ^ '0');
-        }
-        if (nValid && nMonth >= 1 && nMonth <= 12) break;
-        printf("输入无效，请输入1~12之间的月份\n\n");
+        break;
     }
 
-    // 根据月份计算当月最大天数
-    if (nMonth == 2) {
-        int nLeap = ((nYear % 4 == 0 && nYear % 100 != 0) || (nYear % 400 == 0));
-        nDaysInMonth = nLeap ? 29 : 28;
-    }
-    else if (nMonth == 4 || nMonth == 6 || nMonth == 9 || nMonth == 11)
-        nDaysInMonth = 30;
-    else
-        nDaysInMonth = 31;
+    nMaxDay = days_of_month(nYear, nMonth);
 
     // 输入日期
     while (1) {
         printf("日：");
         scanf("%3s", sDateInput);
-        if (discard_rest_of_line()) {
-            printf("输入无效，请输入1~%d之间的日期\n\n", nDaysInMonth);
+        if (discard_rest_of_line() || !str_to_int(sDateInput, &nDay)
+            || nDay < 1 || nDay > nMaxDay) {
+            printf("输入无效，请输入1~%d之间的日期\n\n", nMaxDay);
             continue;
         }
-
-        nDay = 0;
-        nValid = 1;
-        for (int nIndex = 0; sDateInput[nIndex] != '\0'; nIndex++) {
-            if (sDateInput[nIndex] < '0' || sDateInput[nIndex] > '9') {
-                nValid = 0;
-                break;
-            }
-            nDay = nDay * 10 + (sDateInput[nIndex] ^ '0');
-        }
-        if (nValid && nDay >= 1 && nDay <= nDaysInMonth) break;
-        printf("输入无效，请输入1~%d之间的日期\n\n", nDaysInMonth);
+        break;
     }
 
     tmInput->tm_year = nYear - 1900;

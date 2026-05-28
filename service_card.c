@@ -50,28 +50,7 @@ void card_add()
 
     // 输入开卡金额
     int nMoney;
-    char sMoneyInput[32];
-    while (1) {
-        printf("请输入开卡金额（RMB）：");
-        scanf("%31s", sMoneyInput);
-        if (discard_rest_of_line()) {
-            printf("输入无效，请输入正整数！\n\n");
-            continue;
-        }
-
-        nMoney = 0;
-        int nValid = 1;
-        for (int nIndex = 0; sMoneyInput[nIndex] != '\0'; nIndex++) {
-            if (sMoneyInput[nIndex] >= '0' && sMoneyInput[nIndex] <= '9')
-                nMoney = nMoney * 10 + (sMoneyInput[nIndex] ^ '0');
-            else {
-                nValid = 0;
-                break;
-            }
-        }
-        if (nValid && nMoney > 0) break;
-        else printf("输入无效，请输入正整数！\n\n");
-    }
+    input_positive_int("请输入开卡金额（RMB）：", &nMoney);
 
     // 创建新卡并加入链表
     time_t ttCurTime = time(0);
@@ -119,37 +98,35 @@ void card_cancel()
         return;
     }
 
-    int nFound = 0;
-    for (CARD* pCard = card_list.head; pCard != NULL; pCard = pCard->pNext) {
-        if (!strcmp(pCard->sName, sName)) {
-            nFound = 1;
-
-            if (strcmp(pCard->sPwd, sPwd)) {
-                printf("注销失败，密码错误\n");
-                return;
-            }
-
-            // 状态校验：正在上机或已注销的卡不能注销
-            if (pCard->nStatus == ACTIVE) {
-                printf("注销失败，卡正在上机\n");
-                return;
-            }
-            if (pCard->nStatus == CANCELLED) {
-                printf("注销失败，卡已注销\n");
-                return;
-            }
-
-            float fRefundMoney = pCard->fBalance;
-            pCard->nStatus = CANCELLED;
-            pCard->fBalance = 0.0f;
-
-            if (!save_card_list_to_file())
-                printf("警告：卡信息写入文件失败\n");
-
-            printf("--------注销信息如下-------\n");
-            printf("%-20s  %-12s\n", "卡号", "退费金额");
-            printf("%-18s  %-8.1f\n", pCard->sName, fRefundMoney);
-        }
+    CARD* pCard = find_card_by_name(sName);
+    if (!pCard) {
+        printf("无效输入，卡号不存在\n");
+        return;
     }
-    if (!nFound) printf("无效输入，卡号不存在\n");
+
+    if (strcmp(pCard->sPwd, sPwd)) {
+        printf("注销失败，密码错误\n");
+        return;
+    }
+
+    // 状态校验：正在上机或已注销的卡不能注销
+    if (pCard->nStatus == ACTIVE) {
+        printf("注销失败，卡正在上机\n");
+        return;
+    }
+    if (pCard->nStatus == CANCELLED) {
+        printf("注销失败，卡已注销\n");
+        return;
+    }
+
+    float fRefundMoney = pCard->fBalance;
+    pCard->nStatus = CANCELLED;
+    pCard->fBalance = 0.0f;
+
+    if (!save_card_list_to_file())
+        printf("警告：卡信息写入文件失败\n");
+
+    printf("--------注销信息如下-------\n");
+    printf("%-20s  %-12s\n", "卡号", "退费金额");
+    printf("%-18s  %-8.1f\n", pCard->sName, fRefundMoney);
 }
