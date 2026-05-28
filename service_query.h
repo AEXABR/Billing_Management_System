@@ -1,5 +1,9 @@
 /*
  * service_query.h — 查询统计模块
+ *
+ * query_card()    查询卡信息（课程基本功能）
+ * 以下为课程扩展功能，仅需完成课程基本要求可删除：
+ *   query_billing() / choice_one() / choice_two() / choice_three()
  */
 
 #ifndef SERVICE_QUERY_H

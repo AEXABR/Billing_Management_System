@@ -34,7 +34,7 @@ void runService(int nChoice)
     case 4: computer_logout();    break;
     case 5: billing_rechange();   break;
     case 6: billing_refund();     break;
-    case 7: query_billing();      break;
+    case 7: query_billing();      break;  // 扩展功能
     case 8: card_cancel();        break;
     case 0:                       break;  // 退出
     }

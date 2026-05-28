@@ -2,6 +2,8 @@
  * service_query.c — 查询统计实现
  *
  * query_card()    查询卡信息（支持模糊匹配）
+ *
+ * —— 以下为课程扩展功能，仅需完成课程基本要求可不实现 ——
  * query_billing() 查询统计入口（3 个子功能）
  *   choice_one()   按卡号 + 时间范围查询消费明细
  *   choice_two()   按时间范围统计总营业额
@@ -14,7 +16,7 @@
 #include <time.h>
 #include "service_query.h"
 
-// 查询单卡在指定时间段内的消费明细
+// [扩展功能] 查询单卡在指定时间段内的消费明细
 void choice_one()
 {
     printf("----------查询单卡消费--------\n");
@@ -57,7 +59,7 @@ void choice_one()
     printf("共查询到 %d 条记录\n", nCnt);
 }
 
-// 统计指定时间段内的总营业额
+// [扩展功能] 统计指定时间段内的总营业额
 void choice_two()
 {
     printf("----------统计总营业额--------\n");
@@ -78,7 +80,7 @@ void choice_two()
     printf("总营业额：%.1f\n", fTotalAmount);
 }
 
-// 统计某一年各月份的营业额
+// [扩展功能] 统计某一年各月份的营业额
 void choice_three()
 {
     printf("----------统计月营业额--------\n");
@@ -156,7 +158,7 @@ void query_card()
     if (!nFound) printf("无效输入，卡号不存在\n");
 }
 
-// 查询统计入口
+// [扩展功能] 查询统计入口
 void query_billing()
 {
     printf("--------查询统计--------\n");
